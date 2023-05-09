@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, Collection, Events, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Events, EmbedBuilder } = require('discord.js');
 const winston = require("winston");
 const { loadBatch, sendToWebhook } = require('./util/loader');
 const { Game } = require('./models');
@@ -31,8 +31,8 @@ var transport = new winston.transports.DailyRotateFile({
 //require('date.format');
 
 const client = new Client({ intents: [
-    GatewayIntentBits.GuildPresences, GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, 
-    GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildMessageTyping,
+    GatewayIntentBits.GuildPresences, GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildBans, 
+    GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildMessageTyping, 
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.DirectMessages] });
 

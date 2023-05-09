@@ -171,7 +171,7 @@ const recupAchievements = (client, game) => {
             }
 
             if (deleted.length > 0 || added.length > 0) {
-                sendToWebhook(client, game, embeds, {nouveau: newSucces, ajout: added.length > 0, suppr: deleted.length > 0});
+                sendToWebhook(client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed, {nouveau: newSucces, ajout: added.length > 0, suppr: deleted.length > 0});
             }
 
             // et on save
@@ -194,7 +194,7 @@ const createGameLinks = (appid) => {
 
 
 
-const sendToWebhook = (client, game, embeds, {nouveau = false, ajout = false, suppr = false} = {}) => {
+const sendToWebhook = (client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed, {nouveau = false, ajout = false, suppr = false} = {}) => {
     client.guilds.cache.forEach(async guild => {
         const guildDB = await GuildConfig.findOne({guildId: guild.id});
         const webhookUrl = guildDB?.webhook["feed_achievement"];
@@ -211,44 +211,70 @@ const sendToWebhook = (client, game, embeds, {nouveau = false, ajout = false, su
             } else {
                 avatarURL = 'https://avatars.cloudflare.steamstatic.com/cc288975bf62c132f5132bc3452960f3341b665c_full.jpg';
             }
-
-            // nom thread
-            let threadName = nouveau ? "Nouveaux" : (ajout ? "Ajouts" : ( suppr ? "Supprimés" : "Error"));
-
-            // déplacement vers thread
-            let archived = await feedChannel.threads.fetchArchived();
-            let thread = archived.threads.filter(x => x.name === threadName);
-
-            // si pas archivé, on regarde s'il est actif
-            if (thread.size === 0) {
-                let active = await feedChannel.threads.fetchActive();
-                thread = active.threads.filter(x => x.name === threadName);
-            }
-            
-            // si tjs pas actif, on le créé
-            if (thread.size === 0) {
-                logger.info('.. création thread feed ' + threadName)
-                
-                thread = await feedChannel.threads.create({
-                    name: threadName,
-                    //autoArchiveDuration: 60,
-                    reason: 'Feed ' + threadName + ' succès.',
-                });
-            } else {
-                thread = thread.first();
-            }
             
             // envoi vers thread
-            await webhookClient.send({
-                username: game.name,
-                avatarURL: avatarURL,
-                embeds: embeds,
-                threadId: thread.id
-            });
+            // cas particulier
+            if (ajout && suppr) {
+                let threadAdd = await getThread(feedChannel, "Ajouts")
+                let threadDel = await getThread(feedChannel, "Supprimés")
+
+                await webhookClient.send({
+                    username: game.name,
+                    avatarURL: avatarURL,
+                    embeds: [jeuEmbed, addedEmbed],
+                    threadId: threadAdd.id
+                });
+
+                await webhookClient.send({
+                    username: game.name,
+                    avatarURL: avatarURL,
+                    embeds: [jeuEmbed, deletedEmbed],
+                    threadId: threadDel.id
+                });
+            } else {      
+                // nom thread
+                let threadName = nouveau ? "Nouveaux" : (ajout ? "Ajouts" : ( suppr ? "Supprimés" : "Error"));
+    
+                // déplacement vers thread
+                let thread = await getThread(feedChannel, threadName)
+
+                await webhookClient.send({
+                    username: game.name,
+                    avatarURL: avatarURL,
+                    embeds: embeds,
+                    threadId: thread.id
+                });
+            }
         } else {
             logger.warn('URL Webhook ou salon feed non défini !');
         }
     });
+}
+
+const getThread = async (feedChannel, threadName) => {
+    let archived = await feedChannel.threads.fetchArchived();
+    let thread = archived.threads.filter(x => x.name === threadName);
+
+    // si pas archivé, on regarde s'il est actif
+    if (thread.size === 0) {
+        let active = await feedChannel.threads.fetchActive();
+        thread = active.threads.filter(x => x.name === threadName);
+    }
+
+    // si tjs pas actif, on le créé
+    if (thread.size === 0) {
+        logger.info('.. création thread feed ' + threadName)
+        
+        thread = await feedChannel.threads.create({
+            name: threadName,
+            //autoArchiveDuration: 60,
+            reason: 'Feed ' + threadName + ' succès.',
+        });
+    } else {
+        thread = thread.first();
+    }
+
+    return thread;
 }
 
 module.exports = {
