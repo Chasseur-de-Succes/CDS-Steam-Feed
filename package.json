@@ -1,0 +1,28 @@
+{
+  "name": "cds-steam-feed",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kekwel/CDS-Steam-Feed.git"
+  },
+  "author": "Kekwel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Kekwel/CDS-Steam-Feed/issues"
+  },
+  "homepage": "https://github.com/Kekwel/CDS-Steam-Feed#readme",
+  "dependencies": {
+    "discord.js": "^14.10.2",
+    "dotenv": "^16.0.3",
+    "mongoose": "^7.1.0",
+    "steam-user": "^4.28.3",
+    "superagent": "^8.0.9",
+    "winston": "^3.8.2",
+    "winston-daily-rotate-file": "^4.7.1"
+  }
+}
