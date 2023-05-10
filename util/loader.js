@@ -124,10 +124,9 @@ const recupAchievements = (client, game) => {
     retryAfter5min(async function() {
         const resp = await getSchemaForGame(game.appid);
         
-        console.log(` ** ${resp.availableGameStats?.achievements} ?`);
-        console.log(resp.availableGameStats?.achievements);
+        console.log(` ** ${resp.availableGameStats?.achievements?.length} ?`);
         // si jeu a des succès
-        if (resp.availableGameStats?.achievements) {
+        if (resp.availableGameStats?.achievements?.length) {
             console.log(" - " + appid + " a des succes");
             const achievementsDB = game.achievements;
             const achievements = resp.availableGameStats.achievements;
