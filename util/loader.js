@@ -18,7 +18,7 @@ const loadSteamPICS = async (client) => {
 
     steamClient.on('changelist', async (changenumber, apps, packages) => {
         // console.log(' --- changelist ', changenumber);
-        console.log("-- appId changes " + apps.join(', '));
+        console.log("-- CHANGELIST " + apps.join(', '));
         apps
             // distinct
             .filter((value, index, array) => array.indexOf(value) === index)
@@ -40,12 +40,32 @@ const loadSteamPICS = async (client) => {
                         await recupIcon(steamClient, appid, game);
                         
                         // - recup achievements (si présent)
-                        console.log(" ---- recup cheevo " + appid);
                         recupAchievements(client, game);
                     }
                 }
             });
         // console.log('--------');
+    });
+
+    steamClient.on('appUpdate', async (appid, data) => {
+        console.log('-- UPDATE ', appid);
+        // console.log(data);
+
+        // si update est un jeu ou demo ?
+        if (data?.appinfo?.common?.type === 'Game' || data?.appinfo?.common?.type === 'Demo') {
+            // - recup jeu BDD
+            // on le créé seulement, 
+            let game = await Game.findOne({ appid: appid });
+            if (!game) {
+                createNewGame(client, steamClient, appid);
+            } else {
+                // recup icon
+                await recupIcon(steamClient, appid, game);
+                
+                // - recup achievements (si présent)
+                recupAchievements(client, game);
+            }
+        }
     });
 }
 
@@ -106,6 +126,7 @@ const recupAchievements = (client, game) => {
         
         // si jeu a des succès
         if (resp.availableGameStats?.achievements) {
+            console.log(" - " + appid + " a des succes");
             const achievementsDB = game.achievements;
             const achievements = resp.availableGameStats.achievements;
 

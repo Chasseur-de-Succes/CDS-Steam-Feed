@@ -62,6 +62,6 @@ client.once(Events.ClientReady, async c => {
     await loadBatch(client);
     logger.info(`.. terminé`)
 
-    // let game = await Game.findOne({ appid: 1745280 })
+    // let game = await Game.findOne({ appid: 2310900 })
     // recupAchievements(client, game);
 });
