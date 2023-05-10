@@ -122,10 +122,10 @@ const recupIcon = async (steamClient, appId, game) => {
 const recupAchievements = (client, game) => {
     // - si trop de requete (error 429) => timeout 5min, et on recommence
     retryAfter5min(async function() {
-        console.log(` ** staem ${process.env.STEAM_API_KEY} ?`);
         const resp = await getSchemaForGame(game.appid);
         
         console.log(` ** ${resp.availableGameStats?.achievements} ?`);
+        console.log(resp.availableGameStats?.achievements);
         // si jeu a des succès
         if (resp.availableGameStats?.achievements) {
             console.log(" - " + appid + " a des succes");
