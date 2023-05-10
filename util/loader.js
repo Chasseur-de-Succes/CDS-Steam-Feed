@@ -125,6 +125,32 @@ const recupAchievements = (client, game) => {
         const resp = await getSchemaForGame(game.appid);
         
         console.log(` ** ${resp.availableGameStats?.achievements?.length} ?`);
+
+        if (resp.availableGameStats?.achievements) {
+            console.log('ok 1')
+        } else {
+            console.log('not ok 1')
+        }
+        console.log('--')
+        if (resp.availableGameStats?.achievements?.length) {
+            console.log('ok 2')
+        } else {
+            console.log('not ok 2')
+        }
+        console.log('--')
+        if (Array.isArray(resp.availableGameStats?.achievements)) {
+            console.log('ok 3')
+        } else {
+            console.log('not ok 3')
+        }
+        console.log('--')
+        if (Array.isArray(resp.availableGameStats?.achievements) && resp.availableGameStats?.achievements.length) {
+            console.log('ok 4')
+        } else {
+            console.log('not ok 4')
+        }
+        console.log('--')
+
         // si jeu a des succès
         if (resp.availableGameStats?.achievements?.length) {
             console.log(" - " + appid + " a des succes");
