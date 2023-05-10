@@ -166,6 +166,7 @@ const recupAchievements = (client, game) => {
             });
 
             // - comparer succès
+            console.log(" - compare succes");
                 // - ajouté (difference entre PICS et DB)
             const deleted = achievementsDB.filter(({ apiName: api1 }) => !achievements.some(({ apiName: api2 }) => api2 === api1));
                 // - supprimé (difference entre DB et PICS)
@@ -180,10 +181,12 @@ const recupAchievements = (client, game) => {
             if (addedStr.length > 4000)
                 addedStr = addedStr.substring(0, 4000) + "...";
 
+            console.log(" - game urls");
             const gameUrlHeader = `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/header.jpg`;
             const links = createGameLinks(game.appid);
 
             // - embed info jeu
+            console.log(" - crete embed");
             const embeds = [];
             const jeuEmbed = new EmbedBuilder()
                 .setTitle(`${game.name}`)
@@ -204,14 +207,17 @@ const recupAchievements = (client, game) => {
                 .setColor(newSucces ? "#ffa500" : "#4CA64C");
 
             if (deleted.length > 0) {
+                console.log(" - DELETED");
                 deletedEmbed.setDescription(`${deleted.length} succès supprimé${deleted.length > 1 ? 's' : ''}
                     ${deletedStr}`);
                 embeds.push(deletedEmbed);
             }
             if (added.length > 0) {
                 if (newSucces) {
+                    console.log(" - NEW");
                     addedEmbed.setDescription(`**${added.length}** nouveau${added.length > 1 ? 'x' : ''} succès !`);
                 } else {
+                    console.log(" - ADDED");
                     addedEmbed.setDescription(`${added.length} nouveau${added.length > 1 ? 'x' : ''} succès (${achievements.length} au total)
                         ${addedStr}`);
                 }
@@ -223,6 +229,7 @@ const recupAchievements = (client, game) => {
             }
 
             // et on save
+            console.log(" - save");
             game.achievements = achievements;
             await game.save();
         } else {
@@ -243,6 +250,9 @@ const createGameLinks = (appid) => {
 
 
 const sendToWebhook = (client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed, {nouveau = false, ajout = false, suppr = false} = {}) => {
+    
+    console.log(" - send webhook : " + nouveau + ", " + ajout + ", " + suppr);
+
     client.guilds.cache.forEach(async guild => {
         const guildDB = await GuildConfig.findOne({guildId: guild.id});
         const webhookUrl = guildDB?.webhook["feed_achievement"];
