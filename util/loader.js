@@ -171,6 +171,9 @@ const recupAchievements = (client, game) => {
             const deleted = achievementsDB.filter(({ apiName: api1 }) => !achievements.some(({ apiName: api2 }) => api2 === api1));
                 // - supprimé (difference entre DB et PICS)
             const added = achievements.filter(({ apiName: api1 }) => !achievementsDB.some(({ apiName: api2 }) => api2 === api1));
+            console.log(" --- new " + (game.achievements.length === 0));
+            console.log(" --- deleted " + deleted.length);
+            console.log(" --- added " + added.length);
 
             let deletedStr = deleted.map(a => `**${a.displayName}** : ${a.description ?? ''}`).join('\n');
             // - limit 4096 caracteres
@@ -181,12 +184,10 @@ const recupAchievements = (client, game) => {
             if (addedStr.length > 4000)
                 addedStr = addedStr.substring(0, 4000) + "...";
 
-            console.log(" - game urls");
             const gameUrlHeader = `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/header.jpg`;
             const links = createGameLinks(game.appid);
 
             // - embed info jeu
-            console.log(" - crete embed");
             const embeds = [];
             const jeuEmbed = new EmbedBuilder()
                 .setTitle(`${game.name}`)
@@ -260,6 +261,7 @@ const sendToWebhook = (client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed,
         const feedChannel = await client.channels.cache.get(idFeedChannel);
 
         if (webhookUrl && feedChannel) {
+            console.log("   - ok go");
             const webhookClient = new WebhookClient({ url: webhookUrl });
             
             let avatarURL = '';
@@ -273,6 +275,7 @@ const sendToWebhook = (client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed,
             // envoi vers thread
             // cas particulier
             if (ajout && suppr) {
+                console.log("   - AJOUT & SUPPR");
                 let threadAdd = await getThread(feedChannel, "Ajouts")
                 let threadDel = await getThread(feedChannel, "Supprimés")
 
@@ -282,6 +285,7 @@ const sendToWebhook = (client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed,
                     embeds: [jeuEmbed, addedEmbed],
                     threadId: threadAdd.id
                 });
+                console.log("   - AJOUT send");
 
                 await webhookClient.send({
                     username: game.name,
@@ -289,9 +293,11 @@ const sendToWebhook = (client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed,
                     embeds: [jeuEmbed, deletedEmbed],
                     threadId: threadDel.id
                 });
+                console.log("   - DELETE send");
             } else {      
                 // nom thread
                 let threadName = nouveau ? "Nouveaux" : (ajout ? "Ajouts" : ( suppr ? "Supprimés" : "Error"));
+                console.log("   - thread " + threadName);
     
                 // déplacement vers thread
                 let thread = await getThread(feedChannel, threadName)
@@ -302,6 +308,7 @@ const sendToWebhook = (client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed,
                     embeds: embeds,
                     threadId: thread.id
                 });
+                console.log("   - " + threadName + " send");
             }
         } else {
             logger.warn('URL Webhook ou salon feed non défini !');
