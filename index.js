@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits, Collection, Events, EmbedBuilder } = require('discord.js');
 const winston = require("winston");
-const { loadBatch, sendToWebhook } = require('./util/loader');
+const { loadBatch, sendToWebhook, recupAchievements } = require('./util/loader');
 const { Game } = require('./models');
 require('winston-daily-rotate-file');
 require("dotenv").config();
@@ -61,4 +61,7 @@ client.once(Events.ClientReady, async c => {
     logger.info(`Chargement des batchs ..`)
     await loadBatch(client);
     logger.info(`.. terminé`)
+
+    // let game = await Game.findOne({ appid: 1745280 })
+    // recupAchievements(client, game);
 });

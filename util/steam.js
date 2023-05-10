@@ -27,11 +27,11 @@ module.exports.getCommunityApp = async appid => {
 module.exports.getSchemaForGame = async (appid) => {
     // https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key=FC01A70E34CC7AE7174C575FF8D8A07F&appid=220&l=french
     const reponse = await superagent.get('https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?')
-    .query({
-        key: process.env.STEAM_API_KEY,
-        appid: appid,
-        l: 'french'
-    });
+                                    .query({
+                                        key: process.env.STEAM_API_KEY,
+                                        appid: appid,
+                                        l: 'french'
+                                    });
 
     return reponse?.body?.game;
 }

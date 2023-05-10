@@ -40,7 +40,7 @@ const loadSteamPICS = async (client) => {
                         await recupIcon(steamClient, appid, game);
                         
                         // - recup achievements (si présent)
-                        console.log(" ---- recup cheevo");
+                        console.log(" ---- recup cheevo " + appid);
                         recupAchievements(client, game);
                     }
                 }
@@ -279,5 +279,6 @@ const getThread = async (feedChannel, threadName) => {
 
 module.exports = {
     loadBatch,
-    sendToWebhook
+    sendToWebhook,
+    recupAchievements
 }
