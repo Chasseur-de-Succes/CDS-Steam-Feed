@@ -251,7 +251,6 @@ const createGameLinks = (appid) => {
 
 
 const sendToWebhook = (client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed, {nouveau = false, ajout = false, suppr = false} = {}) => {
-    
     console.log(" - send webhook : " + nouveau + ", " + ajout + ", " + suppr);
 
     client.guilds.cache.forEach(async guild => {
@@ -278,7 +277,15 @@ const sendToWebhook = (client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed,
                 console.log("   - AJOUT & SUPPR");
                 let threadAdd = await getThread(feedChannel, "Ajouts")
                 let threadDel = await getThread(feedChannel, "Supprimés")
+                
+                // envoi vers channel
+                await webhookClient.send({
+                    username: game.name,
+                    avatarURL: avatarURL,
+                    embeds: embeds
+                });
 
+                // envoi vers thread
                 await webhookClient.send({
                     username: game.name,
                     avatarURL: avatarURL,
@@ -299,9 +306,18 @@ const sendToWebhook = (client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed,
                 let threadName = nouveau ? "Nouveaux" : (ajout ? "Ajouts" : ( suppr ? "Supprimés" : "Error"));
                 console.log("   - thread " + threadName);
     
+                // envoi vers channel
+                if ("Error" !== threadName) {
+                    await webhookClient.send({
+                        username: game.name,
+                        avatarURL: avatarURL,
+                        embeds: embeds
+                    });
+                }
+                
                 // déplacement vers thread
                 let thread = await getThread(feedChannel, threadName)
-
+                // envoi vers thread
                 await webhookClient.send({
                     username: game.name,
                     avatarURL: avatarURL,
