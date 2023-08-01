@@ -102,6 +102,11 @@ module.exports.fetchGame = async (appId, tag, nameTmp, steamClient) => {
         //     iconHash = result.apps[appId].appinfo.common.clienticon;
         if (result.apps[appId].appinfo?.common?.icon)
             iconHash = result.apps[appId].appinfo.common.icon;
+        
+        // si nom unknown
+        if (gameName === nameTmp && result.apps[appId].appinfo?.common?.name) {
+            gameName = result.apps[appId].appinfo?.common?.name;
+        }
     }
     
     // TODO icon plutot que l'image ? -> recup via API..
