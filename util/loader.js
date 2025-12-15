@@ -241,14 +241,11 @@ const recupAchievements = (client, game) => {
 
 const createGameLinks = (appid) => {
     const steamLink = `[Steam](https://steamcommunity.com/app/${appid})`;
-    const astatLink = `[AStats](https://astats.astats.nl/astats/Steam_Game_Info.php?AppID=${appid})`;
     const shLink = `[SteamHunters](https://steamhunters.com/apps/${appid}/achievements)`;
     const cmeLink = `[Completionist](https://completionist.me/steam/app/${appid})`;
 
-    return `${steamLink} | ${astatLink} | ${shLink} | ${cmeLink}`;
+    return `${steamLink} | ${shLink} | ${cmeLink}`;
 }
-
-
 
 const sendToWebhook = (client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed, {nouveau = false, ajout = false, suppr = false} = {}) => {
     console.log(" - send webhook : " + nouveau + ", " + ajout + ", " + suppr);

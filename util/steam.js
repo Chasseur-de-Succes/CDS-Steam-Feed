@@ -140,7 +140,7 @@ module.exports.fetchGame = async (appId, tag, nameTmp, steamClient) => {
             { name: '🌐 Multi', value: isMulti ? "✅" : "❌", inline: true },
             { name: '🤝 Co-op', value: isCoop ? "✅" : "❌", inline: true },
             { name: '🏆 Succès', value: hasAchievements ? "✅" : "❌", inline: true },
-            // TODO ajouter lien Steam, ASTATS, CME etc
+            // TODO ajouter lien Steam, CME etc
         )
         .setFooter({ text: `par ${tag}`});
     
