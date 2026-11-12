@@ -95,10 +95,17 @@ module.exports.fetchGame = async (appId, tag, nameTmp, steamClient) => {
         if (result.apps[appId].appinfo?.common?.icon)
             iconHash = result.apps[appId].appinfo.common.icon;
 
-        // si nom unknown
-        if (gameName === nameTmp && result.apps[appId].appinfo?.common?.name) {
-            gameName = result.apps[appId].appinfo?.common?.name;
+        // le nom PICS est prioritaire
+        if (result.apps[appId].appinfo?.common?.name) {
+            gameName = result.apps[appId].appinfo.common.name;
         }
+    }
+
+    // nom inexploitable => on ne persiste pas, on laisse retenter
+    if (!gameName || gameName === 'unknown') {
+        const err = new Error(`Nom introuvable pour l'app ${appId}`);
+        err.code = 'NO_NAME';
+        throw err;
     }
 
     // on update ou créé le jeu

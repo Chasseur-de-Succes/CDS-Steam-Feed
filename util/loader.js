@@ -24,16 +24,16 @@ const loadSteamPICS = async (client) => {
             .filter((value, index, array) => array.indexOf(value) === index)
             .forEach(async appid => {
                 // console.log('--- changelist ', appid);
+                // - getProductInfo
+                let result = await steamClient.getProductInfo([appid], [], true); // Passing true as the third argument automatically requests access tokens, which are required for some apps
+                let appinfo = result.apps[appid].appinfo;
+
                 // - recup jeu BDD
                 let game = await GameRepository.findByAppid(appid, { withAchievements: true });
                 
                 if (!game) {
-                    createNewGame(client, steamClient, appid);
+                    createNewGame(client, steamClient, appid, appinfo?.common?.type);
                 } else {
-                    // - getProductInfo
-                    let result = await steamClient.getProductInfo([appid], [], true); // Passing true as the third argument automatically requests access tokens, which are required for some apps
-                    let appinfo = result.apps[appid].appinfo;
-
                     // si update est un jeu ou demo ?
                     if (appinfo?.common?.type === 'Game' || appinfo?.common?.type === 'Demo') {
                         // recup icon
@@ -57,7 +57,7 @@ const loadSteamPICS = async (client) => {
             // on le créé seulement, 
             let game = await GameRepository.findByAppid(appid, { withAchievements: true });
             if (!game) {
-                createNewGame(client, steamClient, appid);
+                createNewGame(client, steamClient, appid, data?.appinfo?.common?.type);
             } else {
                 // recup icon
                 await recupIcon(steamClient, appid, game);
@@ -69,7 +69,12 @@ const loadSteamPICS = async (client) => {
     });
 }
 
-const createNewGame = (client, steamClient, appid) => {
+const createNewGame = (client, steamClient, appid, type) => {
+    // on ne traite que les jeux et démos
+    if (type !== 'Game' && type !== 'Demo') {
+        return;
+    }
+
     console.log(` ** ${appid} pas dans bdd, on créé`);
     
     retryAfter5min(async function() {
