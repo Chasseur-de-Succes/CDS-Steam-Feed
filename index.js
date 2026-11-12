@@ -1,7 +1,6 @@
 const { Client, GatewayIntentBits, Collection, Events, EmbedBuilder } = require('discord.js');
 const winston = require("winston");
-const { loadBatch, sendToWebhook, recupAchievements } = require('./util/loader');
-const { Game } = require('./models');
+const { loadBatch } = require('./util/loader');
 require('winston-daily-rotate-file');
 require("dotenv").config();
 
@@ -36,10 +35,21 @@ const client = new Client({ intents: [
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.DirectMessages] });
 
-client.mongoose = require("./util/mongoose");
-
-// MONGO DB
-client.mongoose.init();
+// POSTGRE / KNEX
+const { Model } = require("objection");
+const Knex = require("knex");
+const knexConfig = require("./knexfile");
+const knex = Knex(knexConfig);
+Model.knex(knex);
+// test connexion
+knex.raw("SELECT 1")
+    .then(() => {
+        logger.info("Connexion PostgreSQL OK");
+    })
+    .catch((error) => {
+        logger.error(`Connexion PostgreSQL ${process.env.DATABASE_URL} impossible`, error);
+        process.exit(1);
+    });
 
 client.on('error', console.error);
 client.on('warn', console.warn);
@@ -61,7 +71,4 @@ client.once(Events.ClientReady, async c => {
     logger.info(`Chargement des batchs ..`)
     await loadBatch(client);
     logger.info(`.. terminé`)
-
-    // let game = await Game.findOne({ appid: 2310900 })
-    // recupAchievements(client, game);
 });
