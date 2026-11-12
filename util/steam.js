@@ -78,9 +78,7 @@ module.exports.fetchGame = async (appId, tag, nameTmp, steamClient) => {
         lSucces = achievements.map(el => ({
             apiName: el.name,
             displayName: el.displayName,
-            description: el.description,
-            icon: el.icon,
-            icongray: el.icongray
+            description: el.description
         }));
     } else {
         // - save tableau vide

@@ -71,8 +71,6 @@ class GameRepository extends BaseRepository {
           apiName: achievement.apiName,
           displayName: achievement.displayName || null,
           description: achievement.description || null,
-          icon: extractFileNameFromUrl(achievement.icon) || null,
-          icongray: extractFileNameFromUrl(achievement.icongray) || null,
         });
       }
 
@@ -87,8 +85,6 @@ class GameRepository extends BaseRepository {
           .merge({
             displayName: Achievement.ref('excluded.displayName'),
             description: Achievement.ref('excluded.description'),
-            icon: Achievement.ref('excluded.icon'),
-            icongray: Achievement.ref('excluded.icongray'),
           });
 
         await Achievement.query(trx)
@@ -108,12 +104,5 @@ class GameRepository extends BaseRepository {
     });
   }
 }
-
-const extractFileNameFromUrl = (value) => {
-  if (value == null) return value;
-  const str = String(value);
-  const lastSlashIndex = str.lastIndexOf("/");
-  return lastSlashIndex === -1 ? str : str.slice(lastSlashIndex + 1);
-};
 
 module.exports = new GameRepository();
