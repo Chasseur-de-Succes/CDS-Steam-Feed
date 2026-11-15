@@ -9,12 +9,16 @@ services:
     env_file:
       - .env
     depends_on:
-      - mongodb
-  mongodb:
-    image: mongo
+      - postgres
+  postgres:
+    image: postgres:15
     restart: always
+    environment:
+      POSTGRES_USER: cds_user
+      POSTGRES_PASSWORD: cds_pwd
+      POSTGRES_DB: cds_db
     volumes:
-      - /opt/cds:/data/db
+      - /opt/cds:/var/lib/postgresql/data
     networks:
       - bdd
 

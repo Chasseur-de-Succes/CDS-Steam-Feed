@@ -1,5 +1,5 @@
 const SteamUser = require('steam-user');
-const { Game, GuildConfig } = require('../models');
+const { GameRepository, GuildConfigRepository } = require('../repositories');
 const { EmbedBuilder, WebhookClient } = require('discord.js');
 const { getSchemaForGame, fetchGame } = require('./steam');
 const { retryAfter5min } = require('./utils');
@@ -24,16 +24,16 @@ const loadSteamPICS = async (client) => {
             .filter((value, index, array) => array.indexOf(value) === index)
             .forEach(async appid => {
                 // console.log('--- changelist ', appid);
+                // - getProductInfo
+                let result = await steamClient.getProductInfo([appid], [], true); // Passing true as the third argument automatically requests access tokens, which are required for some apps
+                let appinfo = result.apps[appid].appinfo;
+
                 // - recup jeu BDD
-                let game = await Game.findOne({ appid: appid });
+                let game = await GameRepository.findByAppid(appid, { withAchievements: true });
                 
                 if (!game) {
-                    createNewGame(client, steamClient, appid);
+                    createNewGame(client, steamClient, appid, appinfo?.common?.type);
                 } else {
-                    // - getProductInfo
-                    let result = await steamClient.getProductInfo([appid], [], true); // Passing true as the third argument automatically requests access tokens, which are required for some apps
-                    let appinfo = result.apps[appid].appinfo;
-
                     // si update est un jeu ou demo ?
                     if (appinfo?.common?.type === 'Game' || appinfo?.common?.type === 'Demo') {
                         // recup icon
@@ -55,9 +55,9 @@ const loadSteamPICS = async (client) => {
         if (data?.appinfo?.common?.type === 'Game' || data?.appinfo?.common?.type === 'Demo') {
             // - recup jeu BDD
             // on le créé seulement, 
-            let game = await Game.findOne({ appid: appid });
+            let game = await GameRepository.findByAppid(appid, { withAchievements: true });
             if (!game) {
-                createNewGame(client, steamClient, appid);
+                createNewGame(client, steamClient, appid, data?.appinfo?.common?.type);
             } else {
                 // recup icon
                 await recupIcon(steamClient, appid, game);
@@ -69,19 +69,24 @@ const loadSteamPICS = async (client) => {
     });
 }
 
-const createNewGame = (client, steamClient, appid) => {
+const createNewGame = (client, steamClient, appid, type) => {
+    // on ne traite que les jeux et démos
+    if (type !== 'Game' && type !== 'Demo') {
+        return;
+    }
+
     console.log(` ** ${appid} pas dans bdd, on créé`);
     
     retryAfter5min(async function() {
         await fetchGame(appid, 'system', 'unknown', steamClient);
 
         // - recup GameDB récemment créé
-        let game = await Game.findOne({ appid: appid });
-        
+        let game = await GameRepository.findByAppid(appid, { withAchievements: true });
+
         // si pas de succès, balek
-        if (game.achievements.length !== 0) {
+        if (game && game.achievements.length !== 0) {
             let gamename = game.name;
-    
+
             // - limit 80 caracteres
             if (gamename.length > 80)
                 gamename = gamename.substring(0, 76) + "...";
@@ -110,13 +115,10 @@ const recupIcon = async (steamClient, appId, game) => {
     // recup icon
     // Passing true as the third argument automatically requests access tokens, which are required for some apps
     let result = await steamClient.getProductInfo([appId], [], true); 
-    // if (result.apps[appId].appinfo?.common?.clienticon)
-    // game.iconHash = result.apps[appId].appinfo.common.clienticon;
-    // else 
     if (result.apps[appId].appinfo?.common?.icon)
         game.iconHash = result.apps[appId].appinfo.common.icon;
 
-    await game.save();
+    await GameRepository.update(appId, { iconHash: game.iconHash });
 }
 
 const recupAchievements = (client, game) => {
@@ -126,35 +128,10 @@ const recupAchievements = (client, game) => {
         
         console.log(` ** ${resp.availableGameStats?.achievements?.length} ?`);
 
-        // if (resp.availableGameStats?.achievements) {
-        //     console.log('ok 1')
-        // } else {
-        //     console.log('not ok 1')
-        // }
-        // console.log('--')
-        // if (resp.availableGameStats?.achievements?.length) {
-        //     console.log('ok 2')
-        // } else {
-        //     console.log('not ok 2')
-        // }
-        // console.log('--')
-        // if (Array.isArray(resp.availableGameStats?.achievements)) {
-        //     console.log('ok 3')
-        // } else {
-        //     console.log('not ok 3')
-        // }
-        // console.log('--')
-        // if (Array.isArray(resp.availableGameStats?.achievements) && resp.availableGameStats?.achievements.length) {
-        //     console.log('ok 4')
-        // } else {
-        //     console.log('not ok 4')
-        // }
-        // console.log('--')
-
         // si jeu a des succès
         if (resp.availableGameStats?.achievements) {
             console.log(" - " + game.appid + " a des succes");
-            const achievementsDB = game.achievements;
+            const achievementsDB = game.achievements ?? [];
             const achievements = resp.availableGameStats.achievements;
 
             // - ajout & save succes dans Game
@@ -231,8 +208,17 @@ const recupAchievements = (client, game) => {
 
             // et on save
             console.log(" - save");
-            game.achievements = achievements;
-            await game.save();
+            await GameRepository.upsertFromSteam({
+                appid: game.appid,
+                name: game.name,
+                type: game.type,
+                iconHash: game.iconHash,
+                isMulti: game.isMulti,
+                isCoop: game.isCoop,
+                hasAchievements: true,
+                isRemoved: game.isRemoved,
+                achievements: achievements
+            });
         } else {
             // TODO si genre tout supprimer ? tester si game a des succes du coup
         }
@@ -241,22 +227,19 @@ const recupAchievements = (client, game) => {
 
 const createGameLinks = (appid) => {
     const steamLink = `[Steam](https://steamcommunity.com/app/${appid})`;
-    const astatLink = `[AStats](https://astats.astats.nl/astats/Steam_Game_Info.php?AppID=${appid})`;
     const shLink = `[SteamHunters](https://steamhunters.com/apps/${appid}/achievements)`;
     const cmeLink = `[Completionist](https://completionist.me/steam/app/${appid})`;
 
-    return `${steamLink} | ${astatLink} | ${shLink} | ${cmeLink}`;
+    return `${steamLink} | ${shLink} | ${cmeLink}`;
 }
-
-
 
 const sendToWebhook = (client, game, embeds, jeuEmbed, deletedEmbed, addedEmbed, {nouveau = false, ajout = false, suppr = false} = {}) => {
     console.log(" - send webhook : " + nouveau + ", " + ajout + ", " + suppr);
 
     client.guilds.cache.forEach(async guild => {
-        const guildDB = await GuildConfig.findOne({guildId: guild.id});
-        const webhookUrl = guildDB?.webhook["feed_achievement"];
-        const idFeedChannel = guildDB?.channels["feed_achievement"];
+        const guildDB = await GuildConfigRepository.findByGuildId(guild.id);
+        const webhookUrl = guildDB?.webhook;
+        const idFeedChannel = guildDB?.channelFeedAchievement;
         const feedChannel = await client.channels.cache.get(idFeedChannel);
 
         if (webhookUrl && feedChannel) {
